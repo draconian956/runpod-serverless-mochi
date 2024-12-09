@@ -1,5 +1,6 @@
 # Stage 1: Base image with common dependencies
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
+FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04
+# FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
 # Prevents prompts from packages asking for user input during installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -10,41 +11,54 @@ ENV PYTHONUNBUFFERED=1
 # Speed up some cmake builds
 ENV CMAKE_BUILD_PARALLEL_LEVEL=8
 
+# 不要檢查 CUDA 版本
+ENV NVIDIA_DISABLE_REQUIRE=1
+
 # Install Python, git and other necessary tools
 RUN apt-get update && apt-get install -y \
 	python3-dev python3-pip pipx git wget \
-	zip unzip libgl1 \
-	&& ln -sf /usr/bin/python3.12 /usr/bin/python \
-	&& ln -sf /usr/bin/pip3 /usr/bin/pip
+	zip unzip libgl1
 
 # Clean up to reduce image size
-RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
-# COPY ./conf/pip.conf ~/.config/pip/pip.conf
-
-RUN rm /usr/lib/python3.12/EXTERNALLY-MANAGED
+RUN apt-get autoremove -y && \
+	apt-get clean -y && \
+	rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Install comfy-cli
-RUN python3 -m pip install --break-system-packages \
+RUN --mount=type=cache,target=/root/.cache/pip \
+	python3 -m pip install \
 	comfy-cli
 
 # Install ComfyUI
-RUN /usr/bin/yes | comfy --workspace /app/ComfyUI install --cuda-version 12.1 --nvidia --version latest
+# RUN /usr/bin/yes | comfy --workspace /app/ComfyUI install --cuda-version 12.1 --nvidia --version latest
+
+# RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
+COPY ./ComfyUI /app/ComfyUI
+
+RUN cd ./ComfyUI && \
+	--mount=type=cache,target=/root/.cache/pip \
+	python3 -m pip install -r requirements.txt --no-cache-dir
 
 # Change working directory to ComfyUI
 WORKDIR /app/ComfyUI
 
-# Install runpod
-# RUN pip install runpod requests
+# RUN cd ./custom_nodes && \
+# 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
+# 	git clone https://github.com/Lightricks/ComfyUI-LTXVideo.git
 
-# Go back to the root
-# WORKDIR /
+# RUN cd ./custom_nodes/ComfyUI-LTXVideo && \
+# 	python3 -m pip install -r requirements.txt
 
-# Add scripts
-# ADD src/start.sh src/restore_snapshot.sh src/rp_handler.py test_input.json ./
-# RUN chmod +x /start.sh /restore_snapshot.sh
+# Install Python dependencies (Worker Template)
+COPY builder/requirements.txt /requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+	python3 -m pip install --upgrade pip && \
+	python3 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
+	rm /requirements.txt
+
+COPY src/* /
 
 # Optionally copy the snapshot file
 # ADD *snapshot*.json /
@@ -55,11 +69,11 @@ WORKDIR /app/ComfyUI
 # Create necessary directories
 RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip
 
-# COPY ./mochi_model[s]/mochi1PreviewVideo_previewBF16.safetensor[s] /comfyui/models/diffusion_models/
-# COPY ./mochi_model[s]/mochi1PreviewVideo_vae.safetensor[s] /comfyui/models/vae/
-# COPY ./mochi_model[s]/stableDiffusion3SD3_textEncoderT5XXLFP16.safetensor[s] /comfyui/models/clip/
+COPY ./mochi_models/mochi1PreviewVideo_fp8Scaled.safetensors /app/ComfyUI/models/diffusion_models/
+COPY ./mochi_models/mochi1PreviewVideo_vae.safetensors /app/ComfyUI/models/vae/
+COPY ./mochi_models/mochi1PreviewVideo_t5xxlFP8E4m3fnScaled.safetensors /app/ComfyUI/models/clip/
 
-EXPOSE 8188 9966
+EXPOSE 8188
 
 # Start the container
-CMD ["comfy","launch","--background","--listen","0.0.0.0","--port","9966"]
+CMD ["python3","main.py","--listen","0.0.0.0","--front-end-version","Comfy-Org/ComfyUI_frontend@latest"]
