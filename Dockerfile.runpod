@@ -14,6 +14,8 @@ ENV CMAKE_BUILD_PARALLEL_LEVEL=8
 # 不要檢查 CUDA 版本
 ENV NVIDIA_DISABLE_REQUIRE=1
 
+ENV ROOT=/app
+
 # Install Python, git and other necessary tools
 RUN apt-get update && apt-get install -y \
 	python3-dev python3-pip pipx git wget \
@@ -31,9 +33,6 @@ WORKDIR /app
 RUN python3 -m pip install --no-cache-dir \
 	comfy-cli
 
-# Install ComfyUI
-# RUN /usr/bin/yes | comfy --workspace /app/ComfyUI install --cuda-version 12.1 --nvidia --version latest
-
 # RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
 COPY ./ComfyUI /app/ComfyUI
 
@@ -43,26 +42,13 @@ RUN cd ./ComfyUI && \
 # Change working directory to ComfyUI
 WORKDIR /app/ComfyUI
 
-# RUN cd ./custom_nodes && \
-# 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
-# 	git clone https://github.com/Lightricks/ComfyUI-LTXVideo.git
-
-# RUN cd ./custom_nodes/ComfyUI-LTXVideo && \
-# 	python3 -m pip install -r requirements.txt
-
 # Install Python dependencies (Worker Template)
-COPY builder/requirements.txt /requirements.txt
+COPY builder/requirements.txt ${ROOT}/requirements.txt
 RUN python3 -m pip install --upgrade pip && \
-	python3 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
-	rm /requirements.txt
+	python3 -m pip install --upgrade -r ${ROOT}/requirements.txt --no-cache-dir && \
+	rm ${ROOT}/requirements.txt
 
-COPY src/* /
-
-# Optionally copy the snapshot file
-# ADD *snapshot*.json /
-
-# Restore the snapshot to install custom nodes
-# RUN /restore_snapshot.sh
+COPY src ${ROOT}/
 
 # Create necessary directories
 RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip
@@ -75,7 +61,13 @@ RUN cd ./custom_nodes && \
 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
 	git clone https://github.com/Nuked88/ComfyUI-N-Nodes.git
 
+WORKDIR ${ROOT}
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV CLI_ARGS=""
+
+RUN chmod +x ${ROOT}/start.sh
+
 EXPOSE 8188
 
 # Start the container
-CMD ["python3","main.py","--listen","0.0.0.0","--front-end-version","Comfy-Org/ComfyUI_frontend@latest"]
+CMD ["sh","/app/start.sh"]

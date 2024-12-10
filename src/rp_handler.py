@@ -238,7 +238,7 @@ def handler(job):
 			logger.error(f'Response: {response.json()}', job['id'])
 
 			return {
-				'error': f'A1111 status code: {response.status_code}',
+				'error': f'ComfyUI status code: {response.status_code}',
 				'output': response.json(),
 				'refresh_worker': True
 			}

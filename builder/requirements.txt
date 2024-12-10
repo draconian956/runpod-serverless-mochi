@@ -1,2 +1,11 @@
+opencv-python
+scikit-build
+diskcache
+moviepy
+Pillow
+timm
+requests
+imageio-ffmpeg
+llama-cpp-python
 typing_extensions
 runpod
