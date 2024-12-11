@@ -1,6 +1,7 @@
 import os
 import time
 import traceback
+from base64 import b64encode
 
 import requests
 import runpod
@@ -8,6 +9,7 @@ from huggingface_hub import HfApi
 from requests.adapters import HTTPAdapter, Retry
 from runpod.serverless.modules.rp_logger import RunPodLogger
 from runpod.serverless.utils.rp_validator import validate
+
 from schemas.api import API_SCHEMA
 from schemas.download import DOWNLOAD_SCHEMA
 from schemas.img2img import IMG2IMG_SCHEMA
@@ -22,9 +24,29 @@ BASE_URI = 'http://127.0.0.1:8188'
 TIMEOUT = 600
 POST_RETRIES = 3
 
+# Time to wait between API check attempts in milliseconds
+COMFY_API_AVAILABLE_INTERVAL_MS = 50
+# Maximum number of API check attempts
+COMFY_API_AVAILABLE_MAX_RETRIES = 500
+# Time to wait between poll attempts in milliseconds
+COMFY_POLLING_INTERVAL_MS = int(
+	os.environ.get("COMFY_POLLING_INTERVAL_MS", 250))
+# Maximum number of poll attempts
+COMFY_POLLING_MAX_RETRIES = int(
+	os.environ.get("COMFY_POLLING_MAX_RETRIES", 500))
+# Host where ComfyUI is running
+COMFY_HOST = "127.0.0.1:8188"
+# Enforce a clean state after each job is done
+# see https://docs.runpod.io/docs/handler-additional-controls#refresh-worker
+REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
+
 automatic_session = requests.Session()
 retries = Retry(total=10, backoff_factor=0.1, status_forcelist=[502, 503, 504])
 automatic_session.mount('http://', HTTPAdapter(max_retries=retries))
+
+server_address = "127.0.0.1:8188"
+client_id = str(uuid.uuid4())
+
 logger = RunPodLogger()
 
 
@@ -46,6 +68,7 @@ def wait_for_service(url):
 
 		time.sleep(0.2)
 
+
 def send_get_request(endpoint):
 	return automatic_session.get(
 		url=f'{BASE_URI}/{endpoint}',
@@ -64,7 +87,8 @@ def send_post_request(endpoint, payload, job_id, retry=0):
 	if response.status_code == 404:
 		if retry < POST_RETRIES:
 			retry += 1
-			logger.warn(f'Received HTTP 404 from endpoint: {endpoint}, Retrying: {retry}', job_id)
+			logger.warn(
+				f'Received HTTP 404 from endpoint: {endpoint}, Retrying: {retry}', job_id)
 			time.sleep(0.2)
 			send_post_request(endpoint, payload, job_id, retry)
 
@@ -76,8 +100,9 @@ def run_inference(inference_request):
 	Run inference on a request.
 	'''
 	response = automatic_session.post(url=f'{LOCAL_URL}/txt2img',
-									  json=inference_request, timeout=600)
+                                   json=inference_request, timeout=600)
 	return response.json()
+
 
 def validate_input(job):
 	return validate(job['input'], INPUT_SCHEMA)
@@ -130,7 +155,8 @@ def download(job):
 
 	# Rename the temporary file to the actual file name
 	os.rename(temp_path, download_path)
-	logger.info(f'{source_url} successfully downloaded to {download_path}', job['id'])
+	logger.info(
+		f'{source_url} successfully downloaded to {download_path}', job['id'])
 
 	return {
 		'msg': 'Download successful',
@@ -179,6 +205,25 @@ def sync(job):
 	}
 
 
+def queue_prompt(prompt):
+	p = {"prompt": prompt, "client_id": client_id}
+	data = json.dumps(p).encode('utf-8')
+	req = urllib.request.Request(
+		"http://{}/prompt".format(server_address), data=data)
+	return json.loads(urllib.request.urlopen(req).read())
+
+
+def get_file_content(filename, subfolder, folder_type):
+	data = {"filename": filename, "subfolder": subfolder, "type": folder_type}
+	url_values = urllib.parse.urlencode(data)
+	with urllib.request.urlopen("http://{}/view?{}".format(server_address, url_values)) as response:
+		return response.read()
+
+
+def get_history(prompt_id):
+	with urllib.request.urlopen("http://{}/history/{}".format(server_address, prompt_id)) as response:
+		return json.loads(response.read())
+
 # ---------------------------------------------------------------------------- #
 #                                RunPod Handler                                #
 # ---------------------------------------------------------------------------- #
@@ -192,72 +237,53 @@ def sync(job):
 # 	# return the output that you want to be returned like pre-signed URLs to output artifacts
 # 	return json
 
+
 def handler(job):
-	validated_input = validate_input(job)
-
-	if 'errors' in validated_input:
-		return {
-			'error': '\n'.join(validated_input['errors'])
-		}
-
-	validated_api = validate_api(job)
-
-	if 'errors' in validated_api:
-		return {
-			'error': '\n'.join(validated_api['errors'])
-		}
-
-	endpoint, method, validated_payload = validate_payload(job)
-
-	if 'errors' in validated_payload:
-		return {
-			'error': '\n'.join(validated_payload['errors'])
-		}
-
-	if 'validated_input' in validated_payload:
-		payload = validated_payload['validated_input']
-	else:
-		payload = validated_payload
-
 	try:
-		logger.info(f'Sending {method} request to: /{endpoint}', job['id'])
-
-		if endpoint == 'v1/download':
-			return download(job)
-		elif endpoint == 'v1/sync':
-			return sync(job)
-		elif method == 'GET':
-			response = send_get_request(endpoint)
-		elif method == 'POST':
-			response = send_post_request(endpoint, payload, job['id'])
-
-		if response.status_code == 200:
-			return response.json()
-		else:
-			logger.error(f'HTTP Status code: {response.status_code}', job['id'])
-			logger.error(f'Response: {response.json()}', job['id'])
-
-			return {
-				'error': f'ComfyUI status code: {response.status_code}',
-				'output': response.json(),
-				'refresh_worker': True
-			}
+		queued_workflow = queue_prompt(job['input']['payload'])
+		prompt_id = queued_workflow['prompt_id']
+		print(f"runpod-worker-comfy - queued workflow with ID {prompt_id}")
 	except Exception as e:
-		logger.error(f'An exception was raised: {e}')
+		return {"error": f"Error queuing workflow: {str(e)}"}
 
-		return {
-			'error': traceback.format_exc(),
-			'refresh_worker': True
-		}
+	# Poll for completion
+	print("runpod-worker-comfy - wait until workflow is complete")
+	retries = 0
+	try:
+		while retries < COMFY_POLLING_MAX_RETRIES:
+			history = get_history(prompt_id)
+
+			# Exit the loop if we have found the history
+			if prompt_id in history and history[prompt_id].get("outputs"):
+				break
+			else:
+				# Wait before trying again
+				time.sleep(COMFY_POLLING_INTERVAL_MS / 1000)
+				retries += 1
+		else:
+			return {"error": "Max retries reached while waiting for video generation"}
+	except Exception as e:
+		return {"error": f"Error waiting for video generation: {str(e)}"}
+
+	file_indicator = (
+		history.get(prompt_id, {})
+		.get('outputs', {})
+		.get('28', {})
+		.get('images', [])
+	)[0]
+
+	video_bytes = get_file_content(*list(file_indicator.values()))
+	video_base64 = b64encode(video_bytes)
+	print(
+		"runpod-worker-comfy - the file was generated and converted to base64"
+	)
+
+	return {
+		'output': video_base64
+	}
 
 
 if __name__ == "__main__":
-	# wait_for_service(url=f'{LOCAL_URL}/txt2img')
-
-	# print("WebUI API Service is ready. Starting RunPod...")
-
-	# runpod.serverless.start({"handler": handler})
-
 	wait_for_service(f'{BASE_URI}/models')
 	logger.info('ComfyUI API is ready')
 	logger.info('Starting RunPod Serverless...')
