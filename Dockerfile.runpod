@@ -50,6 +50,8 @@ RUN python3 -m pip install --upgrade pip && \
 
 COPY src ${ROOT}/
 
+RUN rm ${ROOT}/test_input.json || true
+
 # Create necessary directories
 RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip
 
