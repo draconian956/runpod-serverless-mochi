@@ -275,13 +275,14 @@ def handler(job):
 	)[0]
 
 	video_bytes = get_file_content(*list(file_indicator.values()))
-	video_base64 = b64encode(video_bytes)
+	video_base64_bytes = b64encode(video_bytes)
+	video_base64_str=video_base64_bytes.decode('utf8')
 	print(
 		"runpod-worker-comfy - the file was generated and converted to base64"
 	)
 
 	return {
-		'output': video_base64
+		'output': video_base64_str
 	}
 
 
