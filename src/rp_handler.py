@@ -35,7 +35,7 @@ COMFY_POLLING_INTERVAL_MS = int(
 	os.environ.get("COMFY_POLLING_INTERVAL_MS", 250))
 # Maximum number of poll attempts
 COMFY_POLLING_MAX_RETRIES = int(
-	os.environ.get("COMFY_POLLING_MAX_RETRIES", 500))
+	os.environ.get("COMFY_POLLING_MAX_RETRIES", 5000))
 # Host where ComfyUI is running
 COMFY_HOST = "127.0.0.1:8188"
 # Enforce a clean state after each job is done
@@ -276,13 +276,14 @@ def handler(job):
 
 	video_bytes = get_file_content(*list(file_indicator.values()))
 	video_base64_bytes = b64encode(video_bytes)
-	video_base64_str=video_base64_bytes.decode('utf8')
+	video_base64_str = video_base64_bytes.decode('utf8')
 	print(
 		"runpod-worker-comfy - the file was generated and converted to base64"
 	)
 
 	return {
-		'output': video_base64_str
+		'file_indicator': file_indicator,
+		'video_base64': video_base64_str,
 	}
 
 

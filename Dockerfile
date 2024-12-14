@@ -43,13 +43,6 @@ RUN cd ./ComfyUI && \
 # Change working directory to ComfyUI
 WORKDIR /app/ComfyUI
 
-# RUN cd ./custom_nodes && \
-# 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
-# 	git clone https://github.com/Lightricks/ComfyUI-LTXVideo.git
-
-# RUN cd ./custom_nodes/ComfyUI-LTXVideo && \
-# 	python3 -m pip install -r requirements.txt
-
 # Install Python dependencies (Worker Template)
 COPY builder/requirements.txt /requirements.txt
 RUN python3 -m pip install --upgrade pip && \
@@ -58,22 +51,21 @@ RUN python3 -m pip install --upgrade pip && \
 
 COPY src/* /
 
-# Optionally copy the snapshot file
-# ADD *snapshot*.json /
-
-# Restore the snapshot to install custom nodes
-# RUN /restore_snapshot.sh
-
 # Create necessary directories
-RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip
+RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip models/text_encoders
 
 COPY ./mochi_models/mochi1PreviewVideo_fp8Scaled.safetensors /app/ComfyUI/models/diffusion_models/
 COPY ./mochi_models/mochi1PreviewVideo_vae.safetensors /app/ComfyUI/models/vae/
 COPY ./mochi_models/mochi1PreviewVideo_t5xxlFP8E4m3fnScaled.safetensors /app/ComfyUI/models/clip/
+COPY ./mochi_models/ltx-video-2b-v0.9.safetensors /app/ComfyUI/models/checkpoints/
 
 RUN cd ./custom_nodes && \
 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
+	git clone https://github.com/Lightricks/ComfyUI-LTXVideo.git && \
 	git clone https://github.com/Nuked88/ComfyUI-N-Nodes.git
+
+RUN cd ./custom_nodes/ComfyUI-LTXVideo && \
+	python3 -m pip install -r requirements.txt
 
 EXPOSE 8188
 
