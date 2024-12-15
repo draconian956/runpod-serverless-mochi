@@ -68,13 +68,17 @@ prompt = json.loads(prompt_text)
 ws = websocket.WebSocket()
 ws.connect("ws://{}/ws?clientId={}".format(server_address, client_id))
 
-prompt_id='af13340f-b331-4742-9b15-f71bdf2d5b4c'
+prompt_id='729cb6e1-7eb2-4410-a844-1c827a232dda'
 history=get_history(prompt_id)
-file_indicator=history.get(prompt_id,{}).get('outputs',{}).get('28',{}).get('images',[])[0]
-A=history.get(prompt_id,{}).get('outputs',{}).get('28',{}).get('images',[])[0]
+file_indicator=history.get(prompt_id,{}).get('outputs',{}).get('40',{}).get('gifs',[])[0]
+A=history.get(prompt_id,{}).get('outputs',{}).get('40',{}).get('gifs',[])[0]
 
 # images = get_images(ws, prompt)
-image=get_image(*list(file_indicator.values()))
+image=get_image(
+    filename=file_indicator['filename'],
+    subfolder=file_indicator['subfolder'],
+    folder_type=file_indicator['type']
+)
 Path(file_indicator.get('filename')).write_bytes(image)
 ws.close() # for in case this example is used in an environment where it will be repeatedly called, like in a Gradio app. otherwise, you'll randomly receive connection timeouts
 

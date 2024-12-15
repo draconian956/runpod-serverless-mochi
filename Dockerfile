@@ -18,7 +18,7 @@ ENV NVIDIA_DISABLE_REQUIRE=1
 RUN apt-get update && apt-get install -y \
 	python3-dev python3-pip pipx git wget \
 	zip unzip libgl1 libglib2.0-0 libsm6 \
-	libxrender1 libxext6
+	libxrender1 libxext6 ffmpeg
 
 # Clean up to reduce image size
 RUN apt-get autoremove -y && \
@@ -58,14 +58,20 @@ COPY ./mochi_models/mochi1PreviewVideo_fp8Scaled.safetensors /app/ComfyUI/models
 COPY ./mochi_models/mochi1PreviewVideo_vae.safetensors /app/ComfyUI/models/vae/
 COPY ./mochi_models/mochi1PreviewVideo_t5xxlFP8E4m3fnScaled.safetensors /app/ComfyUI/models/clip/
 COPY ./mochi_models/ltx-video-2b-v0.9.safetensors /app/ComfyUI/models/checkpoints/
+COPY ./mochi_models/t5xxl_fp16.safetensors /app/ComfyUI/models/text_encoders/
 
 RUN cd ./custom_nodes && \
 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
 	git clone https://github.com/Lightricks/ComfyUI-LTXVideo.git && \
-	git clone https://github.com/Nuked88/ComfyUI-N-Nodes.git
+	git clone https://github.com/Nuked88/ComfyUI-N-Nodes.git && \
+	git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git
 
 RUN cd ./custom_nodes/ComfyUI-LTXVideo && \
-	python3 -m pip install -r requirements.txt
+	python3 -m pip install -r requirements.txt --no-cache-dir && \
+	cd ../ComfyUI-N-Nodes && \
+	python3 -m pip install -r requirements.txt --no-cache-dir && \
+	cd ../ComfyUI-VideoHelperSuite && \
+	python3 -m pip install -r requirements.txt --no-cache-dir
 
 EXPOSE 8188
 

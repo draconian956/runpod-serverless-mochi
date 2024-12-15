@@ -102,7 +102,7 @@ def run_inference(inference_request):
 	Run inference on a request.
 	'''
 	response = automatic_session.post(url=f'{LOCAL_URL}/txt2img',
-                                   json=inference_request, timeout=600)
+								   json=inference_request, timeout=600)
 	return response.json()
 
 
@@ -270,11 +270,15 @@ def handler(job):
 	file_indicator = (
 		history.get(prompt_id, {})
 		.get('outputs', {})
-		.get('28', {})
-		.get('images', [])
+		.get('40', {})
+		.get('gifs', [])
 	)[0]
 
-	video_bytes = get_file_content(*list(file_indicator.values()))
+	video_bytes = get_file_content(
+		filename=file_indicator['filename'],
+		subfolder=file_indicator['subfolder'],
+		folder_type=file_indicator['type']
+	)
 	video_base64_bytes = b64encode(video_bytes)
 	video_base64_str = video_base64_bytes.decode('utf8')
 	print(
