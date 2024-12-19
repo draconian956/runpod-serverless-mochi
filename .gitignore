@@ -167,3 +167,5 @@ cython_debug/
 /test.py
 /runpod_output.txt
 /video_base64_decoder.py
+/.vscode
+*.code-workspace
