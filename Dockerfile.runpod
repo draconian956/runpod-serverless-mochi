@@ -55,9 +55,9 @@ RUN rm ${ROOT}/test_input.json || true
 # Create necessary directories
 RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip models/text_encoders
 
-COPY ./mochi_models/mochi1PreviewVideo_previewBF16.safetensors /app/ComfyUI/models/diffusion_models/
-COPY ./mochi_models/mochi1PreviewVideo_vae.safetensors /app/ComfyUI/models/vae/
-COPY ./mochi_models/stableDiffusion3SD3_textEncoderT5XXLFP16.safetensors /app/ComfyUI/models/clip/
+COPY ./SafeTensors/mochi1PreviewVideo_previewBF16.safetensors /app/ComfyUI/models/diffusion_models/
+COPY ./SafeTensors/mochi1PreviewVideo_vae.safetensors /app/ComfyUI/models/vae/
+COPY ./SafeTensors/stableDiffusion3SD3_textEncoderT5XXLFP16.safetensors /app/ComfyUI/models/clip/
 
 RUN cd ./custom_nodes && \
 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \

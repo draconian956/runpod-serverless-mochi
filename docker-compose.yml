@@ -1,0 +1,30 @@
+networks:
+  comfyui_shared:
+    external: true
+    name: comfyui_shared
+
+services:
+  mochi:
+    build:
+      context: .
+      dockerfile: Dockerfile.mochi
+    image: mochi
+    container_name: mochi
+    ports:
+      - "8188:8188"
+    tty: true
+    restart: "no"
+    networks:
+      - comfyui_shared
+  ltx:
+    build:
+      context: .
+      dockerfile: Dockerfile.ltxvideo
+    image: ltxvideo
+    container_name: ltxvideo
+    ports:
+      - "8189:8188"
+    tty: true
+    restart: "no"
+    networks:
+      - comfyui_shared
