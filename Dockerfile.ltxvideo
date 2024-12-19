@@ -1,0 +1,70 @@
+# Stage 1: Base image with common dependencies
+FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04
+# FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+
+# Prevents prompts from packages asking for user input during installation
+ENV DEBIAN_FRONTEND=noninteractive
+# Prefer binary wheels over source distributions for faster pip installations
+ENV PIP_PREFER_BINARY=1
+# Ensures output from python is printed immediately to the terminal without buffering
+ENV PYTHONUNBUFFERED=1 
+# Speed up some cmake builds
+ENV CMAKE_BUILD_PARALLEL_LEVEL=8
+
+# 不要檢查 CUDA 版本
+ENV NVIDIA_DISABLE_REQUIRE=1
+
+# Install Python, git and other necessary tools
+RUN apt-get update && apt-get install -y \
+	python3-dev python3-pip pipx git wget \
+	zip unzip libgl1 libglib2.0-0 libsm6 \
+	libxrender1 libxext6 ffmpeg
+
+# Clean up to reduce image size
+RUN apt-get autoremove -y && \
+	apt-get clean -y && \
+	rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install comfy-cli
+RUN python3 -m pip install --no-cache-dir \
+	comfy-cli
+
+# RUN git clone https://github.com/comfyanonymous/ComfyUI.git
+COPY ./ComfyUI /app/ComfyUI
+
+RUN cd ./ComfyUI && \
+	python3 -m pip install -r requirements.txt --no-cache-dir
+
+# Change working directory to ComfyUI
+WORKDIR /app/ComfyUI
+
+# Install Python dependencies (Worker Template)
+COPY builder/requirements.txt /requirements.txt
+RUN python3 -m pip install --upgrade pip && \
+	python3 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
+	rm /requirements.txt
+
+COPY src/* /
+
+# Create necessary directories
+RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip models/text_encoders
+
+COPY ./mochi_models/ltx-video-2b-v0.9.safetensors /app/ComfyUI/models/checkpoints/
+COPY ./mochi_models/t5xxl_fp16.safetensors /app/ComfyUI/models/text_encoders/
+
+RUN cd ./custom_nodes && \
+	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
+	git clone https://github.com/Lightricks/ComfyUI-LTXVideo.git && \
+	git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git && \
+	git clone https://github.com/SeanScripts/ComfyUI-Unload-Model.git
+
+RUN python3 -m pip install -r custom_nodes/ComfyUI-LTXVideo/requirements.txt --no-cache-dir && \
+	python3 -m pip install -r custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt --no-cache-dir
+
+EXPOSE 8188
+
+# Start the container
+# CMD ["python3","main.py","--force-upcast-attention","--use-split-cross-attention","--listen","0.0.0.0","--front-end-version","Comfy-Org/ComfyUI_frontend@latest"]
+CMD ["python3","main.py","--use-split-cross-attention","--lowvram","--listen","0.0.0.0","--front-end-version","Comfy-Org/ComfyUI_frontend@latest"]
