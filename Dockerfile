@@ -57,6 +57,10 @@ RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip m
 COPY ./mochi_models/mochi1PreviewVideo_fp8Scaled.safetensors /app/ComfyUI/models/diffusion_models/
 COPY ./mochi_models/mochi1PreviewVideo_vae.safetensors /app/ComfyUI/models/vae/
 COPY ./mochi_models/mochi1PreviewVideo_t5xxlFP8E4m3fnScaled.safetensors /app/ComfyUI/models/clip/
+
+# COPY ./mochi_models/mochi_preview_dit_GGUF_Q8_0.safetensors /app/ComfyUI/models/diffusion_models/mochi/
+COPY ./mochi_models/mochi_preview_vae_decoder_bf16.safetensors /app/ComfyUI/models/vae/mochi/
+
 COPY ./mochi_models/ltx-video-2b-v0.9.safetensors /app/ComfyUI/models/checkpoints/
 COPY ./mochi_models/t5xxl_fp16.safetensors /app/ComfyUI/models/text_encoders/
 
@@ -64,16 +68,20 @@ RUN cd ./custom_nodes && \
 	git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
 	git clone https://github.com/Lightricks/ComfyUI-LTXVideo.git && \
 	git clone https://github.com/Nuked88/ComfyUI-N-Nodes.git && \
-	git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git
+	git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git && \
+	git clone https://github.com/SeanScripts/ComfyUI-Unload-Model.git && \
+	git clone https://github.com/kijai/ComfyUI-MochiWrapper.git
 
 RUN cd ./custom_nodes/ComfyUI-LTXVideo && \
 	python3 -m pip install -r requirements.txt --no-cache-dir && \
 	cd ../ComfyUI-N-Nodes && \
 	python3 -m pip install -r requirements.txt --no-cache-dir && \
 	cd ../ComfyUI-VideoHelperSuite && \
+	python3 -m pip install -r requirements.txt --no-cache-dir && \
+	cd ../ComfyUI-MochiWrapper && \
 	python3 -m pip install -r requirements.txt --no-cache-dir
 
 EXPOSE 8188
 
 # Start the container
-CMD ["python3","main.py","--listen","0.0.0.0","--front-end-version","Comfy-Org/ComfyUI_frontend@latest"]
+CMD ["python3","main.py","--force-upcast-attention","--use-split-cross-attention","--listen","0.0.0.0","--front-end-version","Comfy-Org/ComfyUI_frontend@latest"]
