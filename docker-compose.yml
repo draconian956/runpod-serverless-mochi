@@ -1,6 +1,5 @@
 networks:
   comfyui_shared:
-    external: true
     name: comfyui_shared
 
 services:
@@ -10,21 +9,39 @@ services:
       dockerfile: Dockerfile.mochi
     image: mochi
     container_name: mochi
+    volumes:
+      - D:\user\Desktop\ComfyUIOutput:/app/ComfyUI/output
     ports:
       - "8188:8188"
     tty: true
     restart: "no"
     networks:
       - comfyui_shared
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1 # alternatively, use `count: all` for all GPUs
+              capabilities: [ gpu ]
   ltx:
     build:
       context: .
       dockerfile: Dockerfile.ltxvideo
     image: ltxvideo
     container_name: ltxvideo
+    volumes:
+      - D:\user\Desktop\ComfyUIOutput:/app/ComfyUI/output
     ports:
       - "8189:8188"
     tty: true
     restart: "no"
     networks:
       - comfyui_shared
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1 # alternatively, use `count: all` for all GPUs
+              capabilities: [ gpu ]

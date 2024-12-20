@@ -52,6 +52,7 @@ COPY src /app/
 RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip models/text_encoders
 
 COPY ./SafeTensors/ltx-video-2b-v0.9.safetensors /app/ComfyUI/models/checkpoints/
+COPY ./SafeTensors/mochi_preview_vae_decoder_bf16.safetensors /app/ComfyUI/models/vae/mochi/
 COPY ./PixArt-XL-2-1024-MS /app/ComfyUI/models/text_encoders/PixArt-XL-2-1024-MS/
 
 RUN cd ./custom_nodes && \
