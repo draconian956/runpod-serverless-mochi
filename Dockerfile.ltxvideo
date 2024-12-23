@@ -81,7 +81,6 @@ RUN cd ./custom_nodes && \
 	python3 -m pip install -r was-node-suite-comfyui/requirements.txt \
 	-r ComfyUI-Florence2/requirements.txt \
 	-r comfy-image-saver/requirements.txt \
-	-r ComfyUI-Custom-Scripts/requirements.txt \
 	-r Batch-Condition-ComfyUI/requirements.txt \
 	-r ComfyUI-MediaMixer/requirements.txt \
 	-r ComfyUI-Crystools/requirements.txt \
