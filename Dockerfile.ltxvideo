@@ -67,6 +67,26 @@ RUN cd ./custom_nodes && \
 	-r ComfyUI-MochiWrapper/requirements.txt \
 	-r ComfyUI-VideoHelperSuite/requirements.txt --no-cache-dir
 
+RUN cd ./custom_nodes && \
+	git clone https://github.com/WASasquatch/was-node-suite-comfyui.git && \
+	git clone https://github.com/kijai/ComfyUI-Florence2.git && \
+	git clone https://github.com/giriss/comfy-image-saver.git && \
+	git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git && \
+	git clone https://github.com/laksjdjf/Batch-Condition-ComfyUI.git && \
+	git clone https://github.com/DoctorDiffusion/ComfyUI-MediaMixer.git && \
+	git clone https://github.com/crystian/ComfyUI-Crystools.git && \
+	git clone https://github.com/kijai/ComfyUI-KJNodes.git
+
+RUN cd ./custom_nodes && \
+	python3 -m pip install -r was-node-suite-comfyui/requirements.txt \
+	-r ComfyUI-Florence2/requirements.txt \
+	-r comfy-image-saver/requirements.txt \
+	-r ComfyUI-Custom-Scripts/requirements.txt \
+	-r Batch-Condition-ComfyUI/requirements.txt \
+	-r ComfyUI-MediaMixer/requirements.txt \
+	-r ComfyUI-Crystools/requirements.txt \
+	-r ComfyUI-KJNodes/requirements.txt
+
 EXPOSE 8188
 
 # Start the container
