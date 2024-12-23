@@ -49,7 +49,7 @@ RUN python3 -m pip install --upgrade pip && \
 COPY src /app/
 
 # Create necessary directories
-RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip models/text_encoders
+RUN mkdir -p models/checkpoints models/vae models/diffusion_models models/clip models/text_encoders models/LLM
 
 COPY ./SafeTensors/ltx-video-2b-v0.9.safetensors /app/ComfyUI/models/checkpoints/
 COPY ./SafeTensors/mochi_preview_vae_decoder_bf16.safetensors /app/ComfyUI/models/vae/mochi/
@@ -72,7 +72,7 @@ RUN cd ./custom_nodes && \
 	git clone https://github.com/kijai/ComfyUI-Florence2.git && \
 	git clone https://github.com/giriss/comfy-image-saver.git && \
 	git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git && \
-	git clone https://github.com/laksjdjf/Batch-Condition-ComfyUI.git && \
+	git clone https://github.com/M1kep/ComfyLiterals.git && \
 	git clone https://github.com/DoctorDiffusion/ComfyUI-MediaMixer.git && \
 	git clone https://github.com/crystian/ComfyUI-Crystools.git && \
 	git clone https://github.com/kijai/ComfyUI-KJNodes.git
@@ -81,7 +81,6 @@ RUN cd ./custom_nodes && \
 	python3 -m pip install -r was-node-suite-comfyui/requirements.txt \
 	-r ComfyUI-Florence2/requirements.txt \
 	-r comfy-image-saver/requirements.txt \
-	-r Batch-Condition-ComfyUI/requirements.txt \
 	-r ComfyUI-MediaMixer/requirements.txt \
 	-r ComfyUI-Crystools/requirements.txt \
 	-r ComfyUI-KJNodes/requirements.txt
