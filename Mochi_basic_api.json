@@ -1,0 +1,150 @@
+{
+  "3": {
+    "inputs": {
+      "seed": 112199984731358,
+      "steps": 35,
+      "cfg": 9.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "37",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "It's a japanese style animation.\n\nOnce upon a time, there lived a voluptuous anime heroine, a busty beauty with a captivating allure. She possessed a stunning figure, boasting a curvaceous 130-pound frame, adorned in a tight uniform that accentuated her ample assets. Her face was angelic, with delicate features and flawless, porcelain-like skin.\n\nAs the camera slowly panned down from her face, every detail of her uniform came into focus. The fine lace patterns on her clothing were intricately designed, and the camera captured their delicate intricacies with precision. She began to undress, revealing a sheer, lacy bra and matching panties beneath.\n\nWith graceful movements, she leaned forward, showcasing her ample bosom and the deep cleavage that seemed to defy gravity. The lace bra hugged her full breasts, accentuating her curves. She continued to pose, each shift in position offering a tantalizing glimpse of her heavenly figure.\n\nThis anime scene, filled with sensuality and innocence, left viewers captivated by her every move. The sheer lace fabric clung to her body, becoming one with her skin, and the camera adored every inch of her being.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码（提示）"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": "fat, low quality, worst quality, deformed, distorted, disfigured, motion smear, motion artifacts, fused fingers, bad anatomy, weird hand, ugly, poor transformation, ugly hands, poorly drawn gloves, bad mouth, poorly drawn feet, poorly drawn ears, thick lips, extra eyes, extra knee, fused face,bad eyes, distorted body, distorted face, suddenly vanishing hands, protruding belly, inconsistent motion, blurry, jittery, distorted, watermarks, inconsistent body",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码（提示）"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "21": {
+    "inputs": {
+      "width": 848,
+      "height": 480,
+      "length": 79,
+      "batch_size": 1
+    },
+    "class_type": "EmptyMochiLatentVideo",
+    "_meta": {
+      "title": "空Mochi潜在视频"
+    }
+  },
+  "28": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "fps": 30,
+      "lossless": false,
+      "quality": 80,
+      "method": "default"
+    },
+    "class_type": "SaveAnimatedWEBP",
+    "_meta": {
+      "title": "保存动画WEBP"
+    }
+  },
+  "37": {
+    "inputs": {
+      "unet_name": "mochi1PreviewVideo_fp8Scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "加载扩散模型"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mochi1PreviewVideo_t5xxlFP8E4m3fnScaled.safetensors",
+      "type": "mochi"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "39": {
+    "inputs": {
+      "vae_name": "mochi1PreviewVideo_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "40": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "Mochi",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  }
+}
