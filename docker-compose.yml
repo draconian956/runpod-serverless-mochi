@@ -1,0 +1,26 @@
+networks:
+  comfyui_shared:
+    name: comfyui_shared
+
+services:
+  mochi:
+    build:
+      context: .
+      dockerfile: Dockerfile.mochi
+    image: mochi
+    container_name: mochi
+    volumes:
+      - D:\user\Desktop\ComfyUIOutput:/app/ComfyUI/output
+    ports:
+      - "8188:8188"
+    tty: true
+    restart: "no"
+    networks:
+      - comfyui_shared
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1 # alternatively, use `count: all` for all GPUs
+              capabilities: [ gpu ]

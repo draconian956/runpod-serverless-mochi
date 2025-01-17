@@ -163,3 +163,4 @@ cython_debug/
 
 *.safetensors
 /ComfyUI
+/PixArt-XL-2-1024-MS

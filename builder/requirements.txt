@@ -1,2 +1,14 @@
+opencv-python
+opencv-contrib-python
+opencv-python-headless
+scikit-build
+diskcache
+moviepy
+xformers
+Pillow
+timm
+requests
+imageio-ffmpeg
+llama-cpp-python
 typing_extensions
 runpod
